@@ -1,0 +1,39 @@
+name: Canlı Cüzdan Takip
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # her 5 dakikada bir (GitHub yoğunken birkaç dakika gecikebilir)
+  workflow_dispatch: {}      # Actions sekmesinden elle çalıştırmak için
+
+permissions:
+  contents: read
+
+concurrency:
+  group: canlicuzdan
+  cancel-in-progress: false
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      # Önceki çalışmanın durumunu (açık pozisyonlar, görülen işlemler) geri yükle
+      - uses: actions/cache/restore@v4
+        with:
+          path: state.json
+          key: canlicuzdan-state-${{ github.run_id }}
+          restore-keys: canlicuzdan-state-
+
+      - name: Kontrol et ve bildir
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 tracker/track.py
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state.json
+          key: canlicuzdan-state-${{ github.run_id }}
