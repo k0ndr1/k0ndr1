@@ -163,6 +163,9 @@ def msg_summary(d, title):
 
 # ---------------------------------------------------------------- ana akış
 def main():
+    if os.environ.get("GITHUB_ACTIONS") and not (BOT_TOKEN and CHAT_ID):
+        print("Telegram secret'ları eklenmemiş; bekleniyor (durum kaydedilmedi).")
+        return 0
     state = load_state()
 
     try:
